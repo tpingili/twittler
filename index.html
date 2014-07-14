@@ -4,37 +4,78 @@
     <title>Twittler</title>
     <script src="jquery.js"></script>
     <script src="data_generator.js"></script>
+    <link rel="stylesheet" href="styles.css">
   </head>
   <body>
+    <div id="displayArea">
+      <div id="header">
+        <h1> Twittler </h1>
+      </div>
+      <h3>Tweets Feed</h3>
+      <button id="toggleBtn">Refresh</button>
+      <div id ="tweetsFeed"></div>
+      <div id = "userFeed"></div>
+    </div>
     <script>
-
       $(document).ready(function(){
-        var index = 0;
+        var totalTweetIndex = 0;
         var totalTweets;
-        var $tweetsList = $('#tweetsList');
+        var $tweetsFeed = $('#tweetsFeed');
+        var $userFeed = $('#userFeed');
         refreshTweets();
 
-        function refreshTweets(){
-          totalTweets = streams.home.length;
-          //iterating through the tweets array and constructing the tweet along with the timestamp and prepending it to the div
+        function refreshTweets(userName){
+          var index = 0;
+          var myDiv;
+          //if username is given, tweets from the username's timeline are counted
+          //the userFeed div is selected
+          if(userName){
+            totalTweets = streams.users[userName].length;
+            myDiv = $userFeed;
+          }
+          //if no username is given, tweets from the entire collection are counted
+          //get the previous index (if existing) upto which the tweets were displayed
+          //the tweetsFeed div is selected
+          else{
+            totalTweets = streams.home.length;  
+            index = totalTweetIndex;
+            myDiv = $tweetsFeed;
+          }
+          
+          //iterating through the tweets and constructing the tweet along with the timestamp and prepending it to the corresponding div
           while(index < totalTweets){
-            var tweet = streams.home[index];
-            var $tweet = $('<div></div>');
-            $tweet.text('@' + tweet.user + ': ' + tweet.message + '  ' + tweet.created_at.toISOString());
-            $tweetsList.prepend($tweet);
+            var tweet = (userName)? streams.users[userName][index] : streams.home[index];
+            var $tweet = $('<div class=\"eachTweet\"><div><a class=\"' + tweet.user + '\">@' + tweet.user + '</a></div>' + '<div id=\"tweetMsg\">' + tweet.message + '</div><div id=\"timeStamp\">' + tweet.created_at.toUTCString() + '</div></div>');
+            myDiv.prepend($tweet);
             index++;
           }
+          //store the tweet index until which we previously printed and start by printing from //this index to the most recent tweet
+          if(!userName){
+            totalTweetIndex = index;
+          }
         }
-        
-      $('#refresh').click(function(){
+      
+      //when refresh button is clicked, userFeed children are removed
+      //button and heading text are changed. tweetsFeed is shown and is refreshed
+      //with the latest tweets
+      $('#toggleBtn').click(function(){
+        $('#userFeed').children().remove();
+        $('#toggleBtn').text("Refresh");
+        $("h3").text("Tweets Feed");
+        $('#tweetsFeed').show();
         refreshTweets();
       });
 
+      //when username is clicked, change the button text and the heading
+      //hide the tweets feed and show the user's latest tweets
+      $('#tweetsFeed').on('click', 'a', function(event){
+        $('#toggleBtn').text("Go Back");
+        $('#tweetsFeed').hide();
+        $("h3").text(this.className + "\'s Timeline");
+        refreshTweets(this.className);
+      });
+      
     });
-
     </script>
-    <h2> Twittler </h2>
-    <button id="refresh">Refresh</button>
-    <div id ="tweetsList"></div>
   </body>
 </html>
